@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MISSION 1964</title>
+<style>
+:root{
+  --bg:#08080b; --panel:#14141a; --line:#292932;
+  --red:#d81e3f; --red-dk:#8d0f26; --gold:#e8b53a; --candy:#a8102e;
+  --txt:#eaeaef; --dim:#8b8b96;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(130% 70% at 50% -8%, #1e1e28 0%, transparent 58%),
+    repeating-linear-gradient(0deg,#08080b 0 38px,#0c0c11 38px 40px), var(--bg);
+  color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Segoe UI",sans-serif;
+  display:flex;justify-content:center;min-height:100dvh;overflow-x:hidden;
+}
+#app{width:100%;max-width:520px;position:relative;display:flex;flex-direction:column;min-height:100dvh;
+  padding:calc(env(safe-area-inset-top) + 16px) 20px calc(env(safe-area-inset-bottom) + 76px)}
+.screen{display:none;flex:1;flex-direction:column;animation:fadeUp .5s ease both}
+.screen.on{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ---------------- 共通 ---------------- */
+.btn{display:block;width:100%;border:0;cursor:pointer;font:700 17px/1.4 inherit;letter-spacing:.05em;
+  padding:17px 18px;border-radius:12px;color:#fff;
+  background:linear-gradient(180deg,#ea2a4d,var(--red-dk));
+  box-shadow:0 4px 0 #5e0a19,0 10px 26px rgba(216,30,63,.3);
+  transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #5e0a19,0 6px 14px rgba(216,30,63,.25)}
+.btn.ghost{background:#1b1b23;border:1px solid var(--line);color:var(--txt);box-shadow:0 3px 0 #000}
+.btn:disabled{opacity:.35;box-shadow:none;transform:none}
+.chrome{background:linear-gradient(180deg,#fff 0%,#cbd0d6 40%,#7c838c 51%,#e8ecf0 72%,#fff 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 1px rgba(0,0,0,.7))}
+.label{font:700 11px/1 inherit;letter-spacing:.24em;color:var(--dim)}
+
+/* ---------------- インパラ ---------------- */
+.stage{width:100%;max-width:420px;margin:0 auto;position:relative}
+.stage svg{width:100%;display:block;overflow:hidden}
+/* ハイドロのポンプアップ：キュン、キュン、と段階的に上がって、ドスンと落ちる */
+.car{transform-origin:320px 176px;animation:hop 3.6s cubic-bezier(.14,.86,.24,1) infinite}
+@keyframes hop{
+  0%,7%   {transform:rotate(0deg)    translateY(0)}
+  11%     {transform:rotate(4.5deg)  translateY(-3px)}   /* キュン */
+  16%     {transform:rotate(2deg)    translateY(-1px)}
+  20%     {transform:rotate(9.5deg)  translateY(-7px)}   /* キュン */
+  25%     {transform:rotate(7deg)    translateY(-5px)}
+  29%     {transform:rotate(14deg)   translateY(-11px)}  /* キュン */
+  34%     {transform:rotate(11.5deg) translateY(-9px)}
+  38%     {transform:rotate(18deg)   translateY(-14px)}  /* キュン（最高到達） */
+  47%     {transform:rotate(17.2deg) translateY(-14px)}
+  54%     {transform:rotate(0deg)    translateY(0)}      /* ドスン */
+  59%     {transform:rotate(6deg)    translateY(-4px)}
+  64%     {transform:rotate(0deg)    translateY(0)}
+  68%     {transform:rotate(2.4deg)  translateY(-1px)}
+  73%,100%{transform:rotate(0deg)    translateY(0)}
+}
+.car.big{animation-duration:2s}
+.wheel{animation:spin 3.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.impact{transform-origin:110px 200px;animation:impact 3.6s ease-out infinite;opacity:0}
+@keyframes impact{0%,52%{opacity:0;transform:scale(.25)}56%{opacity:.95;transform:scale(1)}66%,100%{opacity:0;transform:scale(1.8)}}
+.shadow{animation:shad 3.6s cubic-bezier(.14,.86,.24,1) infinite}
+@keyframes shad{
+  0%,7%{opacity:1;transform:scaleX(1)}
+  38%,47%{opacity:.42;transform:scaleX(.86)}
+  54%{opacity:1;transform:scaleX(1.03)}
+  73%,100%{opacity:1;transform:scaleX(1)}
+}
+
+/* ---------------- スタート ---------------- */
+#s-start{justify-content:center;align-items:center;text-align:center}
+.plate{border:3px solid #e2e6ea;border-radius:9px;background:#f4f6f8;color:#12305e;
+  padding:8px 20px 10px;font:800 30px/1 inherit;letter-spacing:.12em;
+  box-shadow:0 6px 22px rgba(0,0,0,.6);transform:rotate(-2.5deg)}
+.plate small{display:block;font:700 9px/1 inherit;letter-spacing:.3em;color:#3c5b8c;margin-bottom:5px}
+#s-start h1{font-size:clamp(40px,13vw,62px);line-height:.94;letter-spacing:-.025em;margin:6px 0 4px}
+#s-start .sub{color:var(--dim);font-size:14px;line-height:1.85;margin:8px 0 26px}
+
+/* ---------------- シャッター ---------------- */
+#shutter{position:fixed;inset:0;z-index:100;pointer-events:none;display:none}
+#shutter.on{display:block}
+#shutter i{position:absolute;left:0;width:100%;height:50%;
+  background:repeating-linear-gradient(180deg,#25252e 0 12px,#1a1a22 12px 15px);
+  box-shadow:0 0 40px #000}
+#shutter i.t{top:0;transform:translateY(-100%);animation:shT 1.05s ease-in-out forwards}
+#shutter i.b{bottom:0;transform:translateY(100%);animation:shB 1.05s ease-in-out forwards}
+@keyframes shT{0%{transform:translateY(-100%)}42%{transform:translateY(0)}58%{transform:translateY(0)}100%{transform:translateY(-100%)}}
+@keyframes shB{0%{transform:translateY(100%)}42%{transform:translateY(0)}58%{transform:translateY(0)}100%{transform:translateY(100%)}}
+
+/* ---------------- クイズ ---------------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.gears{display:flex;gap:5px}
+.gear{width:26px;height:30px;border-radius:5px;background:#101016;border:1px solid var(--line);
+  display:grid;place-items:center;font:800 13px/1 inherit;color:#33333f}
+.gear.now{color:#fff;border-color:var(--red);background:linear-gradient(180deg,#3a0d18,#1a0509);
+  box-shadow:0 0 12px rgba(216,30,63,.5)}
+.gear.done{color:var(--gold);border-color:#5c4a16;background:#150f04}
+.kslots{display:flex;gap:6px}
+.kslot{width:34px;height:40px;border-radius:6px;background:#0d0d12;border:1px solid var(--line);
+  display:grid;place-items:center;font:800 19px/1 inherit;color:#2e2e39;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.8)}
+.kslot.got{color:var(--gold);border-color:#6b5518;background:#191408;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.8),0 0 14px rgba(232,181,58,.4);animation:pop .45s ease}
+@keyframes pop{0%{transform:scale(.4) rotate(-14deg);opacity:0}60%{transform:scale(1.2)}100%{transform:none;opacity:1}}
+.qtext{font-size:clamp(19px,5.3vw,23px);line-height:1.6;font-weight:700;margin:2px 0 22px}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice{text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--txt);
+  border-radius:12px;padding:15px 15px;font:600 16px/1.45 inherit;cursor:pointer;
+  display:flex;gap:12px;align-items:flex-start;transition:.15s}
+.choice:active{transform:scale(.985)}
+.choice .k{flex:0 0 25px;height:25px;border-radius:50%;background:#25252e;color:var(--dim);
+  display:grid;place-items:center;font:800 12px/1 inherit}
+.choice.ok{border-color:#2f9e5f;background:#0f2418}
+.choice.ok .k{background:#2f9e5f;color:#fff}
+.choice.ng{border-color:#7a2230;background:#230f14;opacity:.7}
+.choice.ng .k{background:#7a2230;color:#fff}
+.feedback{margin-top:18px;display:none}
+.feedback.on{display:block;animation:fadeUp .3s ease both}
+.fb-title{font:800 19px/1 inherit;margin-bottom:8px}
+.fb-title.ok{color:#43c47b}.fb-title.ng{color:#ff6b83}
+.fb-body{color:var(--dim);font-size:13.5px;line-height:1.8;margin-bottom:16px}
+/* 入手カード（渡すのは言葉と数字だけ。ルールは一切説明しない） */
+.card{border:1px solid #5c4a16;background:linear-gradient(180deg,#1a1305,#0f0b03);
+  border-radius:12px;padding:14px;text-align:center;margin-bottom:16px;
+  animation:cardIn .55s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px) rotate(-2deg) scale(.9)}to{opacity:1;transform:none}}
+.card .cw .pn{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  background:var(--gold);color:#191408;font:800 15px/1 inherit;font-style:normal;
+  margin-left:10px;vertical-align:middle;box-shadow:0 0 14px rgba(232,181,58,.55)}
+/* 最終ロックで並ぶ、入手済みパーツの控え */
+.parts{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin:18px 0 2px}
+.pchip{display:inline-flex;align-items:center;gap:7px;border:1px solid #5c4a16;border-radius:9px;
+  padding:7px 9px;background:linear-gradient(180deg,#1a1305,#0f0b03);font:700 13px/1 inherit}
+.pchip b{display:grid;place-items:center;width:19px;height:19px;border-radius:50%;
+  background:var(--gold);color:#191408;font:800 11px/1 inherit}
+.card .cw{font:800 24px/1 inherit;letter-spacing:.1em}
+.card .cw span{color:#4a4a55}
+.card .cw span.hit{color:var(--gold);text-shadow:0 0 16px rgba(232,181,58,.85)}
+.card .cn{font:700 10px/1 inherit;letter-spacing:.24em;color:#7a6528;margin-bottom:10px}
+
+/* ---------------- ロック ---------------- */
+#s-lock{justify-content:center}
+.lockwrap{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px 18px;text-align:center}
+.lockq{font-size:17px;font-weight:700;line-height:1.7;margin:12px 0 6px}
+.lockh{color:var(--dim);font-size:13px;line-height:1.8}
+.ansrow{display:flex;gap:9px;justify-content:center;margin:20px 0 6px}
+.aslot{width:56px;height:66px;border-radius:9px;border:1px dashed #3a3a46;background:#0c0c11;
+  display:grid;place-items:center;font:800 28px/1 inherit;color:#fff;cursor:pointer}
+.aslot.fill{border-style:solid;border-color:var(--gold);background:#191408;box-shadow:0 0 14px rgba(232,181,58,.3)}
+.tilerow{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:14px 0 4px;min-height:56px}
+.tile{width:46px;height:54px;border-radius:8px;border:1px solid #45455a;
+  background:linear-gradient(180deg,#25252f,#15151c);color:#fff;
+  font:800 23px/1 inherit;cursor:pointer;box-shadow:0 3px 0 #000}
+.tile:active{transform:translateY(2px)}
+.tile.used{visibility:hidden}
+.drums{display:flex;gap:9px;justify-content:center;margin:20px 0 6px}
+.drum{display:flex;flex-direction:column;align-items:center;gap:7px}
+.drum button{width:52px;height:32px;border:1px solid var(--line);background:#1c1c24;color:var(--txt);
+  border-radius:8px;font-size:14px;cursor:pointer}
+.drum button:active{background:#2a2a35}
+.dnum{width:52px;height:66px;border-radius:8px;border:1px solid #34343f;
+  background:linear-gradient(180deg,#08080b,#20202a 45%,#08080b);
+  display:grid;place-items:center;font:800 32px/1 inherit;color:#fff;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.95)}
+.lockmsg{margin-top:14px;font-size:13.5px;color:var(--dim);min-height:20px;line-height:1.7}
+.lockmsg.bad{color:#ff6b83;animation:shake .35s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.hintbtn{margin-top:12px;background:none;border:0;color:#6f6f7c;font-size:12px;
+  text-decoration:underline;cursor:pointer;letter-spacing:.05em}
+
+/* ---------------- クリア ---------------- */
+#s-clear{justify-content:center;align-items:center;text-align:center;position:relative}
+#smoke{position:fixed;inset:0;pointer-events:none;z-index:40}
+.puff{position:absolute;border-radius:50%;opacity:0;filter:blur(10px);
+  background:radial-gradient(circle at 40% 40%,rgba(255,255,255,.92),rgba(198,203,213,.5) 45%,rgba(160,165,175,0) 72%)}
+@keyframes puff{0%{opacity:0;transform:translate(0,0) scale(.15)}18%{opacity:.95}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(2.8)}}
+.clear-inner{opacity:0}
+.clear-inner.on{animation:reveal 1.1s cubic-bezier(.2,.9,.3,1) both}
+@keyframes reveal{from{opacity:0;transform:scale(.86) translateY(20px);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
+#s-clear .mc{font:800 12px/1 inherit;letter-spacing:.36em;color:var(--red)}
+#s-clear h2{font-size:clamp(46px,15vw,74px);line-height:.92;margin:12px 0 4px;letter-spacing:-.03em}
+.age{display:inline-block;margin:14px 0 4px;padding:13px 26px;border-radius:14px;
+  border:1px solid #4a3a10;background:linear-gradient(180deg,#221a06,#120e04);
+  font:800 14px/1 inherit;letter-spacing:.12em;color:var(--gold);box-shadow:0 0 34px rgba(232,181,58,.2)}
+.age b{display:block;font-size:52px;letter-spacing:-.02em;margin:6px 0 3px}
+.msg{color:#c5c5ce;font-size:15px;line-height:2.05;margin:22px 0 6px;white-space:pre-line}
+.confetti{position:fixed;top:-16px;width:9px;height:15px;z-index:39;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(114vh) rotate(720deg);opacity:.15}}
+.mute{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 12px);right:14px;width:40px;height:40px;
+  border-radius:50%;background:rgba(18,18,24,.9);border:1px solid var(--line);color:var(--dim);
+  font-size:15px;cursor:pointer;z-index:60;display:grid;place-items:center}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;animation-iteration-count:1 !important}}
+</style>
+</head>
+<body>
+<div id="app">
+<button class="mute" id="mute" aria-label="サウンド切替">&#128266;</button>
+
+<!-- ==================== START ==================== -->
+<section class="screen on" id="s-start">
+  <div class="plate"><small>CALIFORNIA</small>19&middot;64</div>
+  <div class="stage" id="stage1"></div>
+  <h1 class="chrome">MISSION<br>1964</h1>
+  <p class="sub">ガレージの鍵は、5つの答えの中にある。<br>拾い集めて、並べ替えろ。</p>
+  <button class="btn" id="btn-start">IGNITION &#9654;</button>
+</section>
+
+<!-- ==================== QUIZ ==================== -->
+<section class="screen" id="s-quiz">
+  <div class="topbar">
+    <div class="gears" id="gears"></div>
+    <div class="kslots" id="kslots"></div>
+  </div>
+  <p class="qtext" id="qtext"></p>
+  <div class="choices" id="choices"></div>
+  <div class="feedback" id="feedback">
+    <div class="fb-title" id="fbTitle"></div>
+    <div id="cardHost"></div>
+    <div class="fb-body" id="fbBody"></div>
+    <button class="btn" id="btn-next">NEXT &#9654;</button>
+  </div>
+</section>
+
+<!-- ==================== LOCK ==================== -->
+<section class="screen" id="s-lock">
+  <div class="lockwrap">
+    <div class="label" id="lockLabel">FINAL LOCK &mdash; 1/2</div>
+    <p class="lockq" id="lockQ"></p>
+    <p class="lockh" id="lockH"></p>
+    <div id="stage1Body"></div>
+    <div class="lockmsg" id="lockmsg"></div>
+    <button class="btn" id="btn-unlock" style="margin-top:14px">UNLOCK</button>
+    <button class="hintbtn" id="btn-hint">&#9654; ヒントが欲しい</button>
+  </div>
+</section>
+
+<!-- ==================== CLEAR ==================== -->
+<section class="screen" id="s-clear">
+  <div class="clear-inner" id="clearInner">
+    <div class="mc">MISSION COMPLETE</div>
+    <h2 class="chrome">CLEAR!</h2>
+    <div class="stage" id="stage2" style="margin:6px auto 2px;max-width:330px"></div>
+    <div class="age">HAPPY BIRTHDAY<b>26</b>YEARS OLD</div>
+    <p class="msg" id="clearMsg"></p>
+    <button class="btn ghost" id="btn-again" style="margin-top:8px">&#8635; もう一度</button>
+  </div>
+</section>
+
+<div id="smoke"></div>
+<div id="shutter"><i class="t"></i><i class="b"></i></div>
+</div>
+
+<script>
+/* =====================================================================
+   ★ ここだけ編集すればOK ★
+   ===================================================================== */
+
+const QUESTIONS = [
+  { gear:"1",
+    q:"インパラのエンブレム。あの跳ねてる動物の正体は？",
+    c:["アフリカのレイヨウ","南米のヤマネコ","インドの水牛","伝説の白い馬"],
+    a:0,
+    word:"レイヨウ", pick:3,
+    d:"時速80kmで走って3m跳ぶ。名前負けしてない動物です。" },
+
+  { gear:"2",
+    q:"アメ車のエンジンにつく「327」「283」「409」。この数字が表すものは？",
+    c:["最高速度(mph)","馬力","キュービックインチ","生産年の下3ケタ"],
+    a:2,
+    word:"インチ", pick:2,
+    d:"排気量です。327ci＝約5.4L。日本車の感覚だと完全にバグってる数字。" },
+
+  { gear:"3",
+    q:"ホイールナットを「規定の力」でキッチリ締める。このとき必ず使う工具は？",
+    c:["モンキーレンチ","トルクレンチ","インパクトドライバー","プライヤー"],
+    a:1,
+    word:"トルクレンチ", pick:3,
+    d:"締めすぎればボルトが伸び、緩ければ走行中に外れる。数字で締める道具。" },
+
+  { gear:"4",
+    q:"ローライダーで、車体をボヨンボヨン上下に跳ねさせるアレの名前は？",
+    c:["ハイドロリクス","エアロパーツ","ターボチャージャー","デフロック"],
+    a:0,
+    word:"ハイドロリクス", pick:4,
+    d:"オイルポンプで車高を動かす。64インパラはこの世界の絶対王者です。" },
+
+  { gear:"5",
+    q:"1964 Impala <b>SS</b>。この「SS」は何の略？",
+    c:["Special Series","Standard Sedan","Street Style","Super Sport"],
+    a:3,
+    word:null, pick:null,
+    d:"バケットシートとセンターコンソールを備えた、当時のスポーツ仕様。<br><br>……4つの文字は揃った。<b style=\"color:#e8b53a\">並べ替えろ。</b>" }
+];
+
+const LOCK1_ANSWER = "ロクヨン";   // 1段目：カナ並べ替え
+const LOCK2_ANSWER = "1964";       // 2段目：数字ダイヤル
+
+const LOCK1_HINTS = [
+  "パーツに刻まれた数字は、位置を指している。",
+  "それぞれの言葉から1文字ずつ、抜き出せ。",
+  "抜き出した4文字を並べ替えろ。それは車種名じゃない、仲間内での「通り名」だ。",
+  "「ロ」から始まる。"
+];
+const LOCK2_HINTS = [
+  "その通り名を、数字に置き換えろ。",
+  "西暦4ケタだ。",
+  "1で始まる。"
+];
+
+const CLEAR_MESSAGE =
+"誕生日おめでとう。\n" +
+"これからも頑張ってね。";
+
+/* ===================================================================== */
+
+/* =====================================================================
+   1964 Impala（ローライダー仕様）— 側面図
+   方針：最初のシンプルな輪郭に戻す。描き込みすぎると逆に似なくなるため、
+         足すのは「金のワイヤーホイール」と「丸型テール」の2点だけ。
+   ===================================================================== */
+function impalaSVG(uid){
+  var P="p"+uid, G="g"+uid, C="c"+uid, S="s"+uid;
+
+  /* ---- 13インチ ワイヤーホイール ---- */
+  function wheel(){
+    var sp="", i, a, b;
+    for(i=0;i<36;i++){
+      a=i*10*Math.PI/180; b=a+0.30;
+      sp+='<line x1="'+(Math.cos(a)*5).toFixed(2)+'" y1="'+(Math.sin(a)*5).toFixed(2)
+        + '" x2="'+(Math.cos(b)*13.4).toFixed(2)+'" y2="'+(Math.sin(b)*13.4).toFixed(2)
+        + '" stroke="url(#'+S+')" stroke-width=".85" stroke-linecap="round"/>';
+    }
+    for(i=0;i<36;i++){
+      a=i*10*Math.PI/180; b=a-0.30;
+      sp+='<line x1="'+(Math.cos(a)*5).toFixed(2)+'" y1="'+(Math.sin(a)*5).toFixed(2)
+        + '" x2="'+(Math.cos(b)*13.4).toFixed(2)+'" y2="'+(Math.sin(b)*13.4).toFixed(2)
+        + '" stroke="url(#'+S+')" stroke-width=".85" stroke-linecap="round" opacity=".7"/>';
+    }
+    var kn="";
+    for(i=0;i<3;i++){
+      kn+='<rect x="-1.2" y="-6.2" width="2.4" height="12.4" rx="1.2" fill="url(#'+C+')" '
+        + 'transform="rotate('+(i*60)+')"/>';
+    }
+    return ''
+      + '<circle r="25" fill="#08080a"/>'
+      + '<circle r="25" fill="none" stroke="#000" stroke-width="1"/>'
+      + '<circle r="22.7" fill="none" stroke="#1a1a1f" stroke-width="2"/>'
+      + '<circle r="18.5" fill="#f1eee6"/>'
+      + '<circle r="18.5" fill="none" stroke="#b6b2a6" stroke-width=".8"/>'
+      + '<circle r="15.7" fill="#d7d2c6"/>'
+      + '<g class="wheel">'
+      +   '<circle r="15.2" fill="none" stroke="url(#'+C+')" stroke-width="2.1"/>'
+      +   '<circle r="13.9" fill="#131018"/>'
+      +   sp
+      +   '<circle r="5.6" fill="url(#'+C+')"/>'
+      +   '<circle r="4.5" fill="#1a1620"/>'
+      +   kn
+      +   '<circle r="1.7" fill="#fff8dc"/>'
+      + '</g>';
+  }
+
+  return '<svg viewBox="0 0 438 215" role="img" aria-label="1964 Impala Lowrider">'
+  + '<defs>'
+  +  '<linearGradient id="'+P+'" x1="0" y1="0" x2="0" y2="1">'
+  +   '<stop offset="0" stop-color="#e0284f"/><stop offset=".42" stop-color="#a8102e"/>'
+  +   '<stop offset=".62" stop-color="#6d0a1f"/><stop offset="1" stop-color="#3d0512"/></linearGradient>'
+  +  '<linearGradient id="'+G+'" x1="0" y1="0" x2="0" y2="1">'
+  +   '<stop offset="0" stop-color="#9fc3d8"/><stop offset="1" stop-color="#31505f"/></linearGradient>'
+  +  '<linearGradient id="'+C+'" x1="0" y1="0" x2="0" y2="1">'
+  +   '<stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#8d949c"/>'
+  +   '<stop offset="1" stop-color="#eef1f4"/></linearGradient>'
+  +  '<linearGradient id="'+S+'" x1="0" y1="0" x2="0" y2="1">'
+  +   '<stop offset="0" stop-color="#fff2c4"/><stop offset=".5" stop-color="#dcae3e"/>'
+  +   '<stop offset="1" stop-color="#856418"/></linearGradient>'
+  + '</defs>'
+
+  + '<g transform="translate(0,58)">'          /* 上に跳ねる余白 */
+
+  + '<ellipse class="shadow" cx="215" cy="152" rx="155" ry="9" fill="#000" opacity=".5"/>'
+
+  + '<g class="car">'
+  +  '<g transform="translate(110,118)">'+wheel()+'</g>'
+  +  '<g transform="translate(320,118)">'+wheel()+'</g>'
+
+     /* ボディ：低く長い、64の水平基調 */
+  +  '<path fill="url(#'+P+')" stroke="#2a0209" stroke-width="1.2" d="'
+  +   'M14,112 L14,92 Q15,85 30,83 L124,73 L156,45 Q160,40 172,39 L252,38 Q264,39 270,45 L300,72 '
+  +   'L382,78 Q400,80 404,90 L404,112 Q404,120 394,120 L24,120 Q14,120 14,112 Z"/>'
+
+     /* リアクォーターの跳ね上がり */
+  +  '<path fill="#8d0f26" opacity=".55" d="M300,72 L382,78 Q400,80 404,90 L404,96 L300,88 Z"/>'
+
+     /* ガラス（サイドウィンドウ2枚＋細いピラー） */
+  +  '<path fill="url(#'+G+')" d="M163,45 Q166,42 174,42 L204,41 L204,70 L142,70 Z"/>'
+  +  '<path fill="url(#'+G+')" d="M212,42 L250,41 Q258,41 262,46 L288,70 L212,70 Z"/>'
+  +  '<rect x="205" y="40" width="6" height="32" fill="#c9ced4"/>'
+
+     /* クロームのサイドスピア＋ロッカーパネル */
+  +  '<path d="M32,95 L400,99" stroke="url(#'+C+')" stroke-width="3.4" fill="none"/>'
+  +  '<path d="M34,90 L300,84" stroke="url(#'+C+')" stroke-width="1.6" opacity=".75" fill="none"/>'
+  +  '<rect x="26" y="113" width="376" height="5" fill="url(#'+C+')" opacity=".85" rx="2"/>'
+
+     /* バンパー・ヘッドライト */
+  +  '<rect x="8" y="93" width="16" height="15" rx="4" fill="url(#'+C+')"/>'
+  +  '<rect x="396" y="90" width="18" height="16" rx="4" fill="url(#'+C+')"/>'
+  +  '<circle cx="24" cy="88" r="4.5" fill="#fff5cf"/>'
+
+     /* 丸型テール（64は片側3連） */
+  +  '<circle cx="401" cy="84" r="3.4" fill="#ef3a44"/>'
+  +  '<circle cx="393" cy="83.4" r="3.4" fill="#ef3a44"/>'
+  +  '<circle cx="385" cy="82.8" r="3.4" fill="#ef3a44"/>'
+  +  '<circle cx="399.8" cy="82.8" r="1.1" fill="#ffb9bd"/>'
+
+     /* ホイールアーチ */
+  +  '<path d="M83,120 A28,28 0 0,1 139,120" fill="none" stroke="#2a0209" stroke-width="2.4"/>'
+  +  '<path d="M293,120 A28,28 0 0,1 349,120" fill="none" stroke="#2a0209" stroke-width="2.4"/>'
+
+     /* ドアの合わせ目 */
+  +  '<path d="M206,72 L206,113" stroke="#3d0512" stroke-width="1.4" opacity=".7"/>'
+  + '</g>'
+
+     /* 着地の火花・土煙 */
+  + '<g class="impact">'
+  +  '<path d="M92,144 L80,136 M110,146 L110,134 M128,144 L140,136" '
+  +   'stroke="#e8b53a" stroke-width="2.6" stroke-linecap="round"/>'
+  +  '<ellipse cx="110" cy="147" rx="34" ry="6" fill="#e8b53a" opacity=".28"/>'
+  + '</g>'
+
+  + '</g>'
+  + '</svg>';
+}
+
+/* -------------------- 状態 -------------------- */
+var idx=0, parts=[], pool=[], soundOn=true, ac=null, stage=1, hintN=0;
+var slotVals=[null,null,null,null], code=[0,0,0,0];
+function $(s){ return document.querySelector(s); }
+function show(id){ document.querySelectorAll(".screen").forEach(function(e){ e.classList.toggle("on", e.id===id); }); }
+
+/* -------------------- 音（音声ファイル不要／その場で合成） -------------------- */
+function ctx(){ if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)(); return ac; }
+function rev(dur,peak){
+  dur=dur||1.5; peak=peak||190; if(!soundOn) return;
+  try{
+    var a=ctx(),t=a.currentTime,g=a.createGain(),f=a.createBiquadFilter();
+    f.type="lowpass"; f.frequency.value=950;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.15,t+.08);
+    g.gain.setValueAtTime(.15,t+dur*.6); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    [0,7].forEach(function(det){
+      var o=a.createOscillator(); o.type="sawtooth"; o.detune.value=det*10;
+      o.frequency.setValueAtTime(45,t);
+      o.frequency.exponentialRampToValueAtTime(peak,t+dur*.55);
+      o.frequency.exponentialRampToValueAtTime(70,t+dur);
+      o.connect(f); o.start(t); o.stop(t+dur+.05);
+    });
+    f.connect(g); g.connect(a.destination);
+  }catch(e){}
+}
+function blip(fq,dur,type){
+  if(!soundOn) return;
+  try{
+    var a=ctx(),t=a.currentTime,o=a.createOscillator(),g=a.createGain();
+    o.type=type||"triangle"; o.frequency.value=fq||880;
+    g.gain.setValueAtTime(.12,t); g.gain.exponentialRampToValueAtTime(.001,t+(dur||.12));
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+(dur||.12)+.03);
+  }catch(e){}
+}
+
+/* -------------------- クイズ -------------------- */
+function drawTop(){
+  $("#gears").innerHTML = QUESTIONS.map(function(q,i){
+    var c = i<idx ? "done" : (i===idx ? "now" : "");
+    return '<div class="gear '+c+'">'+q.gear+'</div>';
+  }).join("");
+  /* 文字は渡さない。手に入るのは「言葉」と「数字」だけ */
+  $("#kslots").innerHTML = [0,1,2,3].map(function(i){
+    return '<div class="kslot '+(parts[i]?"got":"")+'">'+(parts[i]?parts[i].n:"")+'</div>';
+  }).join("");
+}
+function render(){
+  var q=QUESTIONS[idx];
+  $("#qtext").innerHTML=q.q;
+  $("#feedback").classList.remove("on");
+  $("#cardHost").innerHTML="";
+  drawTop();
+  $("#choices").innerHTML = q.c.map(function(t,i){
+    return '<button class="choice" data-i="'+i+'"><span class="k">'+"ABCD"[i]+'</span><span>'+t+'</span></button>';
+  }).join("");
+  $("#choices").querySelectorAll(".choice").forEach(function(b){
+    b.onclick=function(){ answer(+b.dataset.i); };
+  });
+  window.scrollTo(0,0);
+}
+function answer(pick){
+  var q=QUESTIONS[idx], ok = (pick===q.a);
+  $("#choices").querySelectorAll(".choice").forEach(function(b,i){
+    b.disabled=true;
+    if(i===q.a) b.classList.add("ok"); else if(i===pick) b.classList.add("ng");
+  });
+  $("#fbTitle").textContent = ok ? "◎ 正解" : "× ハズレ";
+  $("#fbTitle").className = "fb-title " + (ok?"ok":"ng");
+  $("#fbBody").innerHTML = (ok?"":"正解は <b>"+"ABCD"[q.a]+"</b>。<br>") + q.d;
+  $("#feedback").classList.add("on");
+  ok ? blip(1046,.14) : blip(170,.24,"square");
+
+  /* 間違えてもパーツは手に入る（みんなで進めるため）。
+     渡すのは「言葉」と「数字」だけ。どう使うかは一切説明しない。 */
+  if(q.word){
+    var already = parts.some(function(p){ return p.w===q.word; });
+    if(!already) parts.push({ w:q.word, n:q.pick });
+    $("#cardHost").innerHTML =
+      '<div class="card"><div class="cn">PARTS FOUND</div>'
+      + '<div class="cw">'+q.word+'<i class="pn">'+q.pick+'</i></div></div>';
+    setTimeout(function(){ drawTop(); blip(1320,.18); }, 420);
+  }
+  $("#btn-next").innerHTML = (idx<QUESTIONS.length-1) ? "NEXT &#9654;" : "最後の鍵へ &#9654;";
+}
+$("#btn-next").onclick=function(){
+  if(idx<QUESTIONS.length-1){ idx++; render(); }
+  else { stage=1; hintN=0; buildLock(); show("s-lock"); window.scrollTo(0,0); }
+};
+
+/* -------------------- 最終ロック -------------------- */
+function buildLock(){
+  $("#lockmsg").textContent=""; $("#lockmsg").className="lockmsg";
+  $("#btn-hint").style.display="inline";
+  if(stage===1){
+    $("#lockLabel").innerHTML="FINAL LOCK &mdash; 1/2";
+    $("#lockQ").textContent="4つのパーツから、鍵を組み立てろ。";
+    $("#lockH").textContent="ルールは教えない。お前なら分かるはずだ。";
+    slotVals=[null,null,null,null];
+    buildPool();
+    $("#stage1Body").innerHTML =
+      '<div class="parts">' + parts.map(function(p){
+        return '<span class="pchip">'+p.w+'<b>'+p.n+'</b></span>';
+      }).join("") + '</div>'
+      + '<div class="ansrow" id="ansrow"></div><div class="tilerow" id="tilerow"></div>';
+    drawTiles();
+  }else{
+    $("#lockLabel").innerHTML="FINAL LOCK &mdash; 2/2";
+    $("#lockQ").innerHTML="その名を、<b style=\"color:#e8b53a\">数字</b>に直せ。";
+    $("#lockH").textContent="それが、エンジンをかけるコードだ。";
+    code=[0,0,0,0];
+    $("#stage1Body").innerHTML='<div class="drums" id="drums"></div>';
+    drawDrums();
+  }
+}
+/* 手に入れた4つの言葉に含まれる文字を全部ばらして並べる。
+   正解の4文字は、この中から自力で選び出す必要がある。 */
+function buildPool(){
+  var seen = {};
+  pool = [];
+  parts.forEach(function(p){
+    p.w.split("").forEach(function(c){
+      if(!seen[c]){ seen[c]=1; pool.push(c); }
+    });
+  });
+  for(var i=pool.length-1;i>0;i--){                    /* シャッフル */
+    var j=Math.floor(Math.random()*(i+1)), t=pool[i]; pool[i]=pool[j]; pool[j]=t;
+  }
+}
+function drawTiles(){
+  $("#ansrow").innerHTML = slotVals.map(function(v,i){
+    return '<div class="aslot '+(v?"fill":"")+'" data-s="'+i+'">'+(v||"")+'</div>';
+  }).join("");
+  $("#tilerow").innerHTML = pool.map(function(c,i){
+    var used = slotVals.indexOf(c)>=0;
+    return '<button class="tile '+(used?"used":"")+'" data-t="'+i+'">'+c+'</button>';
+  }).join("");
+  $("#tilerow").querySelectorAll(".tile").forEach(function(b){
+    b.onclick=function(){
+      var c=pool[+b.dataset.t], e=slotVals.indexOf(null);
+      if(e<0) return; slotVals[e]=c; blip(720,.06); drawTiles();
+    };
+  });
+  $("#ansrow").querySelectorAll(".aslot").forEach(function(d){
+    d.onclick=function(){ slotVals[+d.dataset.s]=null; blip(400,.06); drawTiles(); };
+  });
+}
+function drawDrums(){
+  $("#drums").innerHTML = code.map(function(n,i){
+    return '<div class="drum"><button data-i="'+i+'" data-d="1">&#9650;</button>'
+         + '<div class="dnum" id="d'+i+'">'+n+'</div>'
+         + '<button data-i="'+i+'" data-d="-1">&#9660;</button></div>';
+  }).join("");
+  $("#drums").querySelectorAll("button").forEach(function(b){
+    b.onclick=function(){
+      var i=+b.dataset.i;
+      code[i]=(code[i]+ +b.dataset.d+10)%10;
+      $("#d"+i).textContent=code[i]; blip(540,.05);
+    };
+  });
+}
+$("#btn-hint").onclick=function(){
+  var list = stage===1 ? LOCK1_HINTS : LOCK2_HINTS;
+  var m=$("#lockmsg"); m.className="lockmsg";
+  if(hintN<list.length){ m.textContent="HINT "+(hintN+1)+"／"+list.length+"　"+list[hintN]; hintN++; }
+  else m.textContent="ヒントは以上だ。あとは根性で頼む。";
+  blip(660,.1);
+};
+$("#btn-unlock").onclick=function(){
+  var got = stage===1 ? slotVals.join("") : code.join("");
+  var ans = stage===1 ? LOCK1_ANSWER : LOCK2_ANSWER;
+  var m=$("#lockmsg");
+  if(got===ans){
+    m.className="lockmsg"; blip(1568,.2);
+    if(stage===1){
+      m.innerHTML='カチッ。<b style="color:#43c47b">1つ目のロックが外れた。</b>';
+      setTimeout(function(){ stage=2; hintN=0; buildLock(); },900);
+    }else{
+      m.innerHTML='解錠。<b style="color:#43c47b">エンジンをかけろ──</b>';
+      $("#btn-hint").style.display="none";
+      setTimeout(clearScreen,750);
+    }
+  }else{
+    m.textContent = stage===1 ? "ガチャッ……その並びじゃない。" : "ガチャッ……開かない。";
+    m.className="lockmsg bad"; blip(140,.3,"square");
+    setTimeout(function(){ m.className="lockmsg"; },420);
+  }
+};
+
+/* -------------------- クリア演出 -------------------- */
+function clearScreen(){
+  show("s-clear"); rev(2.4,270); smoke();
+  var c=$("#stage2").querySelector(".car");
+  if(c){ c.classList.add("big"); setTimeout(function(){ c.classList.remove("big"); },4500); }
+  setTimeout(function(){ $("#clearInner").classList.add("on"); confetti(); }, 950);
+}
+function smoke(){
+  var box=$("#smoke"); box.innerHTML="";
+  for(var i=0;i<28;i++){
+    var p=document.createElement("div"); p.className="puff";
+    var s=120+Math.random()*230;
+    p.style.width=p.style.height=s+"px";
+    p.style.left=(50+(Math.random()*42-21))+"%";
+    p.style.top=(58+(Math.random()*30-15))+"%";
+    p.style.setProperty("--dx",(Math.random()*580-290)+"px");
+    p.style.setProperty("--dy",(-Math.random()*440-40)+"px");
+    p.style.animation="puff "+(1.7+Math.random()*1.5)+"s ease-out "+(Math.random()*.55)+"s forwards";
+    box.appendChild(p);
+  }
+  setTimeout(function(){ box.innerHTML=""; },3800);
+}
+function confetti(){
+  var cols=["#d81e3f","#e8b53a","#f4f6f8","#43c47b","#5b8dd8"];
+  for(var i=0;i<72;i++){
+    var c=document.createElement("div"); c.className="confetti";
+    c.style.left=Math.random()*100+"vw";
+    c.style.background=cols[i%cols.length];
+    c.style.animationDuration=(2.4+Math.random()*2.4)+"s";
+    c.style.animationDelay=(Math.random()*1.7)+"s";
+    document.body.appendChild(c);
+    setTimeout(function(el){ return function(){ el.remove(); }; }(c),7200);
+  }
+}
+
+/* -------------------- 起動 -------------------- */
+$("#stage1").innerHTML = impalaSVG("A");
+$("#stage2").innerHTML = impalaSVG("B");
+$("#clearMsg").textContent = CLEAR_MESSAGE;
+
+$("#btn-start").onclick=function(){
+  try{ ctx(); }catch(e){}
+  rev(1.4);
+  var sh=$("#shutter"); sh.classList.remove("on"); void sh.offsetWidth; sh.classList.add("on");
+  setTimeout(function(){
+    idx=0; parts=[]; pool=[]; render(); show("s-quiz");
+  },460);
+  setTimeout(function(){ sh.classList.remove("on"); },1100);
+};
+$("#btn-again").onclick=function(){ location.reload(); };
+$("#mute").onclick=function(){ soundOn=!soundOn; $("#mute").innerHTML = soundOn?"&#128266;":"&#128263;"; };
+</script>
+</body>
+</html>
